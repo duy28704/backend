@@ -1,0 +1,126 @@
+package com.example.doan.controller;
+
+import com.example.doan.dto.LaptopRequest;
+import com.example.doan.entity.Laptop;
+import com.example.doan.response.ApiResponse;
+import com.example.doan.response.ExcelResult;
+import com.example.doan.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/products")
+@RequiredArgsConstructor
+public class ProductController {
+
+    private final ProductService productService;
+
+    // =========================
+    // GET ALL PRODUCTS
+    // =========================
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<Laptop>>> getAllProducts(
+            @RequestParam(value = "includeDeleted", required = false, defaultValue = "false") boolean includeDeleted
+    ) {
+        List<Laptop> laptops = productService.findAllLaptops(includeDeleted);
+        ApiResponse<List<Laptop>> response = ApiResponse.<List<Laptop>>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Get all products success")
+                .data(laptops)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // GET PRODUCT BY ID
+    // =========================
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Laptop>> getProductById(@PathVariable Long id) {
+        Laptop laptop = productService.findLaptopById(id);
+        ApiResponse<Laptop> response = ApiResponse.<Laptop>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Get product by id success")
+                .data(laptop)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // CREATE PRODUCT
+    // =========================
+    @PostMapping
+    public ResponseEntity<ApiResponse<Laptop>> createProduct(@RequestBody LaptopRequest request) {
+        Laptop laptop = productService.createLaptop(request);
+        ApiResponse<Laptop> response = ApiResponse.<Laptop>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CREATED.value())
+                .message("Create product success")
+                .data(laptop)
+                .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // =========================
+    // UPDATE PRODUCT
+    // =========================
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Laptop>> updateProduct(
+            @PathVariable Long id,
+            @RequestBody LaptopRequest request
+    ) {
+        Laptop laptop = productService.updateLaptop(id, request);
+        ApiResponse<Laptop> response = ApiResponse.<Laptop>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Update product success")
+                .data(laptop)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // DELETE PRODUCT
+    // =========================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(
+            @PathVariable Long id,
+            @RequestParam(value = "hard", required = false, defaultValue = "false") boolean hard
+    ) {
+        if (hard) {
+            productService.hardDeleteLaptop(id);
+        } else {
+            productService.softDeleteLaptop(id);
+        }
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message(hard ? "Hard delete product success" : "Soft delete product success")
+                .data(null)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // IMPORT PRODUCTS BY EXCEL
+    // =========================
+    @PostMapping("/import")
+    public ResponseEntity<ApiResponse<ExcelResult<Laptop>>> importProducts(@RequestParam("file") MultipartFile file) throws Exception {
+        ExcelResult<Laptop> result = productService.importExcelAndSave(file);
+        
+        ApiResponse<ExcelResult<Laptop>> response = ApiResponse.<ExcelResult<Laptop>>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message(result.isHasError() ? "Import products completed with errors" : "Import products success")
+                .data(result)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+}

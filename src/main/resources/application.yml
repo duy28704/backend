@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: doan
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/laptopshopdb?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
+    username: vuhoangduy
+    password: Vhd28704
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
