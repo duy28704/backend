@@ -25,7 +25,7 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
 
     private final RateLimitFilter rateLimitFilter;
-    
+
      private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -37,7 +37,7 @@ public class SecurityConfig {
 
                 // disable csrf vì dùng JWT
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 // stateless JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
