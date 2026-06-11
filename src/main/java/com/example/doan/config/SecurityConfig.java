@@ -35,7 +35,7 @@ public class SecurityConfig {
 
                 // disable csrf vì dùng JWT
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // stateless JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -53,6 +53,7 @@ public class SecurityConfig {
                         // public products view APIs
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
+                                "/api/v1/products",
                                 "/api/v1/products/**"
                         ).permitAll()
 
