@@ -19,7 +19,7 @@ public class Order {
     private String customerName;
     private String phone;
     
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String address;
     
     private String paymentMethod;
@@ -28,7 +28,7 @@ public class Order {
     private String deliveryDate;
     private String status;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String itemsJson;
 
     private Double subtotal;

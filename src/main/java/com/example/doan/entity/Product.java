@@ -29,7 +29,7 @@ public abstract class Product {
     @Column(length = 1500, unique = true)
     public String link;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     public String images;
 
     public String brand;
@@ -41,19 +41,19 @@ public abstract class Product {
 
     public Integer reviewCount;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     public String shortDescription;
 
     @Column(length = 255)
     public String tag;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     public String specsJson;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     public String reviewsJson;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     public String description;
 
     @Column(nullable = false)

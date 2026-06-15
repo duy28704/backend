@@ -25,4 +25,4 @@ spring:
         format_sql: false
 
 jwt:
-  secret: ${JWT_SECRET:VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Ng==}
+  secret: ${JWT_SECRET:VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY=}
