@@ -50,7 +50,14 @@ public class SecurityConfig {
 
                         // public apis
                         .requestMatchers(
-                                "/api/v1/auth/**"
+                                "/api/v1/auth/**",
+                                "/error"
+                        ).permitAll()
+
+                        // public OPTIONS requests for CORS preflight
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.OPTIONS,
+                                "/**"
                         ).permitAll()
 
                         // public products view APIs
