@@ -92,6 +92,15 @@ public class ProductService {
     }
 
     @Transactional
+    public Laptop restoreLaptop(Long id) {
+        Laptop laptop = findLaptopById(id);
+        laptop.deleted = false;
+        laptop.deletedAt = null;
+        laptop.updatedAt = Instant.now();
+        return laptopRepository.save(laptop);
+    }
+
+    @Transactional
     public ExcelResult<Laptop> importExcelAndSave(MultipartFile file) throws Exception {
         ExcelResult<LaptopRequest> parsed = excelProductService.importExcel(file, LaptopRequest.class);
         List<Laptop> savedLaptops = new ArrayList<>();

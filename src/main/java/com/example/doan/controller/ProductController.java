@@ -123,4 +123,36 @@ public class ProductController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
+    // =========================
+    // GET DELETED PRODUCTS (TRASH BIN)
+    // =========================
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<List<Laptop>>> getDeletedProducts() {
+        List<Laptop> laptops = productService.findAllLaptops(true);
+        List<Laptop> deletedLaptops = laptops.stream().filter(p -> p.deleted).toList();
+        
+        ApiResponse<List<Laptop>> response = ApiResponse.<List<Laptop>>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Get deleted products success")
+                .data(deletedLaptops)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // RESTORE PRODUCT
+    // =========================
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<ApiResponse<Laptop>> restoreProduct(@PathVariable Long id) {
+        Laptop laptop = productService.restoreLaptop(id);
+        ApiResponse<Laptop> response = ApiResponse.<Laptop>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Restore product success")
+                .data(laptop)
+                .build();
+        return ResponseEntity.ok(response);
+    }
 }
