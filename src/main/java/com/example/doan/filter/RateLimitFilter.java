@@ -38,42 +38,36 @@ public class RateLimitFilter
 
     @Override
     protected void doFilterInternal(
-
             HttpServletRequest request,
-
             HttpServletResponse response,
-
             FilterChain filterChain
-
     ) throws ServletException, IOException {
+        try {
+            // lấy IP client
+            String ip = request.getRemoteAddr();
+            if (ip == null || ip.isEmpty()) {
+                ip = "unknown";
+            }
 
-        // lấy IP client
-        String ip =
-                request.getRemoteAddr();
-
-        // lấy bucket theo IP
-        Bucket bucket =
-                cache.computeIfAbsent(
-                        ip,
-                        k -> createBucket()
-                );
-
-        // còn token?
-        if (bucket.tryConsume(1)) {
-
-            filterChain.doFilter(
-                    request,
-                    response
+            // lấy bucket theo IP
+            Bucket bucket = cache.computeIfAbsent(
+                    ip,
+                    k -> createBucket()
             );
 
-        } else {
-
-            // quá giới hạn request
-            response.setStatus(429);
-
-            response.getWriter().write(
-                    "Too Many Requests"
-            );
+            // còn token?
+            if (bucket.tryConsume(1)) {
+                filterChain.doFilter(request, response);
+            } else {
+                // quá giới hạn request
+                response.setStatus(429);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("{\"status\": 429, \"message\": \"Too Many Requests / Yêu cầu quá thường xuyên\", \"data\": null}");
+            }
+        } catch (Exception e) {
+            System.err.println("[RateLimitFilter] Error checking rate limit: " + e.getMessage());
+            filterChain.doFilter(request, response);
         }
     }
 }

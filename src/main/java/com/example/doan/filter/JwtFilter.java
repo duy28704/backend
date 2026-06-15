@@ -50,11 +50,12 @@ public class JwtFilter extends OncePerRequestFilter {
                 && authHeader.startsWith(
                 "Bearer "
         )) {
-
-            token = authHeader.substring(7);
-
-            username =
-                    jwtUtil.extractUsername(token);
+            try {
+                token = authHeader.substring(7);
+                username = jwtUtil.extractUsername(token);
+            } catch (Exception e) {
+                System.err.println("[JwtFilter] Failed to parse JWT: " + e.getMessage());
+            }
         }
 
         // nếu chưa authenticate
