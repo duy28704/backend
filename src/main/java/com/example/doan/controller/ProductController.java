@@ -155,4 +155,37 @@ public class ProductController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/debug-file/{id}")
+    public ResponseEntity<String> debugToFile(@PathVariable Long id) {
+        try {
+            Laptop laptop = productService.findLaptopById(id);
+            java.io.FileWriter writer = new java.io.FileWriter("d:/doan/backend/debug-laptop.txt");
+            writer.write("ID: " + laptop.getId() + "\n");
+            writer.write("Name: " + laptop.getName() + "\n");
+            writer.write("SpecsJson: " + laptop.getSpecsJson() + "\n");
+            writer.write("cpuTechnology: " + laptop.getCpuTechnology() + "\n");
+            writer.write("cpuCores: " + laptop.getCpuCores() + "\n");
+            writer.write("cpuThreads: " + laptop.getCpuThreads() + "\n");
+            writer.write("cpuSpeed: " + laptop.getCpuSpeed() + "\n");
+            writer.write("npu: " + laptop.getNpu() + "\n");
+            writer.write("gpuCard: " + laptop.getGpuCard() + "\n");
+            writer.write("ram: " + laptop.getRam() + "\n");
+            writer.write("storage: " + laptop.getStorage() + "\n");
+            writer.write("screenSize: " + laptop.getScreenSize() + "\n");
+            writer.write("screenResolution: " + laptop.getScreenResolution() + "\n");
+            writer.write("panel: " + laptop.getPanel() + "\n");
+            writer.write("refreshRate: " + laptop.getRefreshRate() + "\n");
+            writer.write("displayTechnology: " + laptop.getDisplayTechnology() + "\n");
+            writer.write("ports: " + laptop.getPorts() + "\n");
+            writer.write("wireless: " + laptop.getWireless() + "\n");
+            writer.write("battery: " + laptop.getBattery() + "\n");
+            writer.write("operatingSystem: " + laptop.getOperatingSystem() + "\n");
+            writer.write("dimensionsWeight: " + laptop.getDimensionsWeight() + "\n");
+            writer.close();
+            return ResponseEntity.ok("Dumped to debug-laptop.txt");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
 }

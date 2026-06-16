@@ -53,7 +53,7 @@ public class LaptopRequest {
     private Double cpuAiPerformanceTops;
 
     // GPU
-    @ExcelColumn("GPU - Card")
+    @ExcelColumn("GPU - Card màn hình")
     private String gpuCard;
 
     @ExcelColumn("GPU - Số nhân")
@@ -66,85 +66,85 @@ public class LaptopRequest {
     private Double gpuAiPerformanceTops;
 
     // RAM
-    @ExcelColumn("RAM")
+    @ExcelColumn("Bộ nhớ RAM, Ổ cứng - RAM")
     private String ram;
 
-    @ExcelColumn("RAM - Loại")
+    @ExcelColumn("Bộ nhớ RAM, Ổ cứng - Loại RAM")
     private String ramType;
 
-    @ExcelColumn("RAM - Bus")
+    @ExcelColumn("Bộ nhớ RAM, Ổ cứng - Tốc độ Bus RAM")
     private Integer ramBusSpeed;
 
-    @ExcelColumn("RAM - Tối đa")
+    @ExcelColumn("Bộ nhớ RAM, Ổ cứng - Hỗ trợ RAM tối đa")
     private String maxRam;
 
-    @ExcelColumn("Ổ cứng")
+    @ExcelColumn("Bộ nhớ RAM, Ổ cứng - Ổ cứng")
     private String storage;
 
     // Screen
-    @ExcelColumn("Màn hình - Size")
+    @ExcelColumn("Màn hình - Kích thước màn hình")
     private String screenSize;
 
     @ExcelColumn("Màn hình - Độ phân giải")
     private String screenResolution;
 
-    @ExcelColumn("Màn hình - Panel")
+    @ExcelColumn("Màn hình - Tấm nền Panel")
     private String panel;
 
     @ExcelColumn("Màn hình - Tần số quét")
     private Integer refreshRate;
 
-    @ExcelColumn("Màn hình - Màu sắc")
+    @ExcelColumn("Màn hình - Độ phủ màu")
     private String colorGamut;
 
-    @ExcelColumn("Màn hình - Cảm ứng")
+    @ExcelColumn("Màn hình - Màn hình cảm ứng")
     private String touchScreen;
 
-    @ExcelColumn("Màn hình - Công nghệ")
+    @ExcelColumn("Màn hình - Công nghệ màn hình")
     private String displayTechnology;
 
     // I/O
-    @ExcelColumn("Cổng")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Cổng giao tiếp")
     private String ports;
 
-    @ExcelColumn("Wireless")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Kết nối không dây")
     private String wireless;
 
-    @ExcelColumn("Webcam")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Webcam")
     private String webcam;
 
-    @ExcelColumn("Keyboard Backlight")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Đèn bàn phím")
     private String keyboardBacklight;
 
-    @ExcelColumn("Security")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Bảo mật")
     private String security;
 
-    @ExcelColumn("Audio")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Công nghệ âm thanh")
     private String audioTechnology;
 
-    @ExcelColumn("Cooling")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Tản nhiệt")
     private String cooling;
 
-    @ExcelColumn("Features")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Tính năng khác")
     private String otherFeatures;
 
     // Battery & OS
-    @ExcelColumn("Pin")
+    @ExcelColumn("Kích thước - Khối lượng - Pin - Thông tin Pin")
     private String battery;
 
-    @ExcelColumn("Hệ điều hành")
+    @ExcelColumn("Kích thước - Khối lượng - Pin - Hệ điều hành")
     private String operatingSystem;
 
-    @ExcelColumn("Ngày ra mắt")
+    @ExcelColumn("Kích thước - Khối lượng - Pin - Thời điểm ra mắt")
     private String releaseTime;
 
-    @ExcelColumn("Kích thước")
+    @ExcelColumn("Kích thước - Khối lượng - Pin - Kích thước")
     private String dimensionsWeight;
 
-    @ExcelColumn("Chất liệu")
+    @ExcelColumn("Kích thước - Khối lượng - Pin - Chất liệu")
     private String material;
 
-    @ExcelColumn("Thẻ nhớ")
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Khe đọc thẻ nhớ")
     private String memoryCardReader;
 
     private String category;
