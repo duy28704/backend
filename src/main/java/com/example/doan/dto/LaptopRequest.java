@@ -27,43 +27,43 @@ public class LaptopRequest {
     @ExcelColumn("Ảnh")
     private String images;
 
-    @ExcelColumn("Hãng")
+    @ExcelColumn("Kích thước - Khối lượng - Pin - Hãng")
     private String brand;
 
     @ExcelColumn("Mô tả")
     private String description;
 
     // CPU
-    @ExcelColumn("CPU - Công nghệ")
+    @ExcelColumn("CPU - Công nghệ CPU")
     private String cpuTechnology;
 
     @ExcelColumn("CPU - Số nhân")
-    private Integer cpuCores;
+    private String cpuCores;
 
     @ExcelColumn("CPU - Số luồng")
-    private Integer cpuThreads;
+    private String cpuThreads;
 
-    @ExcelColumn("CPU - Tốc độ")
+    @ExcelColumn("CPU - Tốc độ CPU")
     private String cpuSpeed;
 
     @ExcelColumn("CPU - NPU")
     private String npu;
 
-    @ExcelColumn("CPU - AI TOPS")
-    private Double cpuAiPerformanceTops;
+    @ExcelColumn("CPU - Hiệu năng xử lý AI (TOPS)")
+    private String cpuAiPerformanceTops;
 
     // GPU
     @ExcelColumn("GPU - Card màn hình")
     private String gpuCard;
 
     @ExcelColumn("GPU - Số nhân")
-    private Integer gpuCores;
+    private String gpuCores;
 
     @ExcelColumn("GPU - TGP")
-    private Integer gpuTgp;
+    private String gpuTgp;
 
-    @ExcelColumn("GPU - AI TOPS")
-    private Double gpuAiPerformanceTops;
+    @ExcelColumn("GPU - TOPS")
+    private String gpuAiPerformanceTops;
 
     // RAM
     @ExcelColumn("Bộ nhớ RAM, Ổ cứng - RAM")
@@ -73,7 +73,7 @@ public class LaptopRequest {
     private String ramType;
 
     @ExcelColumn("Bộ nhớ RAM, Ổ cứng - Tốc độ Bus RAM")
-    private Integer ramBusSpeed;
+    private String ramBusSpeed;
 
     @ExcelColumn("Bộ nhớ RAM, Ổ cứng - Hỗ trợ RAM tối đa")
     private String maxRam;
@@ -88,11 +88,11 @@ public class LaptopRequest {
     @ExcelColumn("Màn hình - Độ phân giải")
     private String screenResolution;
 
-    @ExcelColumn("Màn hình - Tấm nền Panel")
+    @ExcelColumn("Màn hình - Tấm nền")
     private String panel;
 
     @ExcelColumn("Màn hình - Tần số quét")
-    private Integer refreshRate;
+    private String refreshRate;
 
     @ExcelColumn("Màn hình - Độ phủ màu")
     private String colorGamut;
@@ -128,6 +128,9 @@ public class LaptopRequest {
     @ExcelColumn("Cổng kết nối & tính năng mở rộng - Tính năng khác")
     private String otherFeatures;
 
+    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Khe đọc thẻ nhớ")
+    private String memoryCardReader;
+
     // Battery & OS
     @ExcelColumn("Kích thước - Khối lượng - Pin - Thông tin Pin")
     private String battery;
@@ -144,9 +147,7 @@ public class LaptopRequest {
     @ExcelColumn("Kích thước - Khối lượng - Pin - Chất liệu")
     private String material;
 
-    @ExcelColumn("Cổng kết nối & tính năng mở rộng - Khe đọc thẻ nhớ")
-    private String memoryCardReader;
-
+    // Không có trong Excel
     private String category;
     private String tag;
     private String shortDescription;
