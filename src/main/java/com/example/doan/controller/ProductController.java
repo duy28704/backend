@@ -4,6 +4,7 @@ import com.example.doan.dto.LaptopRequest;
 import com.example.doan.entity.Laptop;
 import com.example.doan.response.ApiResponse;
 import com.example.doan.response.ExcelResult;
+import com.example.doan.service.CloudinaryService;
 import com.example.doan.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final CloudinaryService cloudinaryService;
 
     // =========================
     // GET ALL PRODUCTS
@@ -186,6 +188,31 @@ public class ProductController {
             return ResponseEntity.ok("Dumped to debug-laptop.txt");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
+
+    // =========================
+    // UPLOAD IMAGE TO CLOUDINARY
+    // =========================
+    @PostMapping("/upload")
+    public ResponseEntity<ApiResponse<String>> uploadProductImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String url = cloudinaryService.uploadFile(file);
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.OK.value())
+                    .message("Upload image success")
+                    .data(url)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .message("Upload image failed: " + e.getMessage())
+                    .data(null)
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }

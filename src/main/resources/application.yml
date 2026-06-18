@@ -26,3 +26,8 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY=}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:deddrlyag}
+  api-key: ${CLOUDINARY_API_KEY:659455413236385}
+  api-secret: ${CLOUDINARY_API_SECRET:Ta2N98tJx-8LXJja98AafUbSwIQ}
