@@ -26,6 +26,6 @@ public class CartItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(name = "configuration", nullable = false)
+    @Column(name = "config", nullable = false)
     private String configuration;
 }
