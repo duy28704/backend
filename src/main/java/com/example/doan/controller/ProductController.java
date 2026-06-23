@@ -132,7 +132,7 @@ public class ProductController {
     @GetMapping("/deleted")
     public ResponseEntity<ApiResponse<List<Laptop>>> getDeletedProducts() {
         List<Laptop> laptops = productService.findAllLaptops(true);
-        List<Laptop> deletedLaptops = laptops.stream().filter(p -> p.deleted).toList();
+        List<Laptop> deletedLaptops = laptops.stream().filter(p -> p.isDeleted()).toList();
         
         ApiResponse<List<Laptop>> response = ApiResponse.<List<Laptop>>builder()
                 .timestamp(LocalDateTime.now())

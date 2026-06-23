@@ -25,7 +25,7 @@ public class CartController {
     private final CartService cartService;
     private final CartItemMapper cartItemMapper;
 
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<ApiResponse<List<CartItemDto>>> getCart(@AuthenticationPrincipal User user) {
         List<CartItem> items = cartService.getCart(user);
         List<CartItemDto> dtoList = cartItemMapper.toDtoList(items);
@@ -40,7 +40,7 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<ApiResponse<List<CartItemDto>>> addToCart(
             @AuthenticationPrincipal User user,
             @RequestBody CartItemRequest request
@@ -58,7 +58,7 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/items")
+    @PutMapping("/update")
     public ResponseEntity<ApiResponse<List<CartItemDto>>> updateQuantity(
             @AuthenticationPrincipal User user,
             @RequestBody CartItemUpdateRequest request
@@ -76,7 +76,7 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/items")
+    @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse<List<CartItemDto>>> removeItem(
             @AuthenticationPrincipal User user,
             @RequestParam Long productId,
@@ -95,7 +95,7 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/clear")
     public ResponseEntity<ApiResponse<List<CartItemDto>>> clearCart(@AuthenticationPrincipal User user) {
         cartService.clearCart(user);
         

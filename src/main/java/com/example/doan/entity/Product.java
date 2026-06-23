@@ -18,7 +18,8 @@ import java.time.Instant;
 public abstract class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long product_id;
+    @Column(name = "product_id")
+    private Long id;
 
     @Column(nullable = false, length = 1000)
     private String name;

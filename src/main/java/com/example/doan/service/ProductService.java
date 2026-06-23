@@ -79,9 +79,9 @@ public class ProductService {
     @Transactional
     public void softDeleteLaptop(Long id) {
         Laptop laptop = findLaptopById(id);
-        laptop.deleted = true;
-        laptop.deletedAt = Instant.now();
-        laptop.updatedAt = Instant.now();
+        laptop.setDeleted(true);
+        laptop.setDeletedAt(Instant.now());
+        laptop.setUpdatedAt(Instant.now());
         laptopRepository.save(laptop);
     }
 
@@ -94,9 +94,9 @@ public class ProductService {
     @Transactional
     public Laptop restoreLaptop(Long id) {
         Laptop laptop = findLaptopById(id);
-        laptop.deleted = false;
-        laptop.deletedAt = null;
-        laptop.updatedAt = Instant.now();
+        laptop.setDeleted(false);
+        laptop.setDeletedAt(null);
+        laptop.setUpdatedAt(Instant.now());
         return laptopRepository.save(laptop);
     }
 
@@ -168,9 +168,9 @@ public class ProductService {
         laptop.setRating(request.getRating() != null ? request.getRating() : 5.0);
         laptop.setReviewCount(request.getReviewCount() != null ? request.getReviewCount() : 0);
 
-        laptop.deleted = false;
-        laptop.deletedAt = null;
-        laptop.updatedAt = Instant.now();
+        laptop.setDeleted(false);
+        laptop.setDeletedAt(null);
+        laptop.setUpdatedAt(Instant.now());
     }
 
     private String trimToNull(Object value) {
