@@ -2,6 +2,7 @@ package com.example.doan.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "laptops")
+@PrimaryKeyJoinColumn(name = "product_id")
 @Setter
 @Getter
 @AllArgsConstructor

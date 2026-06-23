@@ -13,6 +13,7 @@ import java.time.Instant;
 @Table(name = "orders")
 public class Order {
     @Id
+    @Column(name = "order_id")
     private String id; // format NX-xxxxx
 
     private String email;
