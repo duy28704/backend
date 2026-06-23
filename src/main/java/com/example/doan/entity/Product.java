@@ -18,48 +18,48 @@ import java.time.Instant;
 public abstract class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long product_id;
 
     @Column(nullable = false, length = 1000)
-    public String name;
+    private String name;
 
     @Column(length = 1000)
-    public String price;
+    private String price;
 
     @Column(length = 1500, unique = true)
-    public String link;
+    private String link;
 
     @Column(columnDefinition = "TEXT")
-    public String images;
+    private String images;
 
-    public String brand;
+    private String brand;
 
     @Column(length = 255)
-    public String category;
+    private String category;
 
-    public Double rating;
+    private Double rating;
 
-    public Integer reviewCount;
+    private Integer reviewCount;
 
     @Column(columnDefinition = "TEXT")
-    public String shortDescription;
+    private String shortDescription;
 
     @Column(length = 255)
-    public String tag;
+    private String tag;
 
     @Column(columnDefinition = "TEXT")
-    public String specsJson;
+    private String specsJson;
 
     @Column(columnDefinition = "TEXT")
-    public String reviewsJson;
+    private String reviewsJson;
 
     @Column(columnDefinition = "TEXT")
-    public String description;
+    private String description;
 
     @Column(nullable = false)
-    public boolean deleted = false;
+    private boolean deleted = false;
 
-    public Instant deletedAt;
-    public Instant createdAt = Instant.now();
-    public Instant updatedAt = Instant.now();
+    private Instant deletedAt;
+    private Instant createdAt = Instant.now();
+    private Instant updatedAt = Instant.now();
 }
