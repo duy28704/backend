@@ -6,6 +6,8 @@ import com.example.doan.response.ApiResponse;
 import com.example.doan.response.ExcelResult;
 import com.example.doan.service.CloudinaryService;
 import com.example.doan.service.ProductService;
+import com.example.doan.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,9 +95,16 @@ public class ProductController {
     // =========================
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(
+            @AuthenticationPrincipal User user,
             @PathVariable Long id,
             @RequestParam(value = "hard", required = false, defaultValue = "false") boolean hard
     ) {
+        boolean hasHardDeletePermission = user != null && user.getAuthorities().stream()
+                .anyMatch(a -> "product.hard-delete".equals(a.getAuthority()));
+        if (hard && !hasHardDeletePermission) {
+            throw new RuntimeException("Bạn không có quyền xóa vĩnh viễn sản phẩm khỏi hệ thống.");
+        }
+        
         if (hard) {
             productService.hardDeleteLaptop(id);
         } else {

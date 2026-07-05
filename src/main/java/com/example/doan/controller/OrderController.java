@@ -1,69 +1,115 @@
 package com.example.doan.controller;
 
+import com.example.doan.dto.DashboardStatsDto;
 import com.example.doan.entity.Order;
-import com.example.doan.entity.User;
-import com.example.doan.repository.CartItemRepository;
-import com.example.doan.repository.OrderRepository;
-import com.example.doan.repository.UserRepository;
 import com.example.doan.response.ApiResponse;
+import com.example.doan.service.OrderService;
+import com.example.doan.service.StatsService;
+import com.example.doan.service.VnPayService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import com.example.doan.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final CartItemRepository cartItemRepository;
+    private final OrderService orderService;
+    private final VnPayService vnPayService;
+    private final StatsService statsService;
+
+    @Value("${vnpay.frontend-url}")
+    private String frontendUrl;
 
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<Order>> checkout(@RequestBody Order order) {
-        // Generate custom order ID like NX-xxxxx
-        String orderId = "NX-" + (10000 + new Random().nextInt(90000));
-        order.setId(orderId);
-        order.setOrderDate(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        order.setDeliveryDate("Ước tính 2-3 ngày");
-        order.setStatus("Chờ xác nhận");
-
-        // Set default masked card details if visa payment is selected
-        if ("visa".equalsIgnoreCase(order.getPaymentMethod()) && order.getPaymentCardInfo() == null) {
-            order.setPaymentCardInfo("•••• •••• •••• 4242");
-        }
-
-        Order savedOrder = orderRepository.save(order);
-
-        // Clear user's database cart after successful order creation
+    public ResponseEntity<ApiResponse<Order>> checkout(@RequestBody Order order, HttpServletRequest request) {
         try {
-            Optional<User> userOpt = userRepository.findByEmail(order.getEmail());
-            if (userOpt.isPresent()) {
-                cartItemRepository.deleteByUser(userOpt.get());
-            }
+            Order savedOrder = orderService.checkout(order, request);
+
+            ApiResponse<Order> response = ApiResponse.<Order>builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.CREATED.value())
+                    .message("Checkout success")
+                    .data(savedOrder)
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<Order> response = ApiResponse.<Order>builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.BAD_REQUEST.value())
+                    .message(e.getMessage())
+                    .data(null)
+                    .build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
-            System.err.println("[OrderController] Failed to clear user database cart: " + e.getMessage());
+            ApiResponse<Order> response = ApiResponse.<Order>builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .message(e.getMessage())
+                    .data(null)
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/vnpay-callback")
+    public ResponseEntity<Void> vnpayCallback(@RequestParam Map<String, String> queryParams) {
+        log.info("Nhận callback thanh toán từ VNPAY: {}", queryParams);
+        
+        // Map is immutable or has security fields, we need to create a mutable copy to verify signature
+        Map<String, String> fields = new HashMap<>(queryParams);
+        boolean isValid = vnPayService.verifySignature(fields);
+        
+        String orderId = queryParams.get("vnp_TxnRef");
+        String responseCode = queryParams.get("vnp_ResponseCode");
+        
+        String redirectUrl = frontendUrl + "/#shop?vnpay=fail";
+        if (isValid) {
+            if ("00".equals(responseCode)) {
+                orderService.updatePaymentStatus(orderId, "Đã thanh toán");
+                log.info("Thanh toán VNPAY thành công cho đơn hàng: {}", orderId);
+                redirectUrl = frontendUrl + "/#shop?vnpay=success&orderId=" + orderId;
+            } else {
+                orderService.updatePaymentStatus(orderId, "Thanh toán thất bại");
+                log.warn("Thanh toán VNPAY thất bại cho đơn hàng: {}, Mã phản hồi: {}", orderId, responseCode);
+                redirectUrl = frontendUrl + "/#shop?vnpay=fail&orderId=" + orderId + "&errorCode=" + responseCode;
+            }
+        } else {
+            log.error("Xác thực chữ ký VNPAY thất bại cho đơn hàng: {}", orderId);
+            redirectUrl = frontendUrl + "/#shop?vnpay=error&orderId=" + orderId;
         }
 
-        ApiResponse<Order> response = ApiResponse.<Order>builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.CREATED.value())
-                .message("Checkout success")
-                .data(savedOrder)
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header("Location", redirectUrl)
                 .build();
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/history")
-    public ResponseEntity<ApiResponse<List<Order>>> getHistory(@RequestParam String email) {
-        List<Order> orders = orderRepository.findByEmailIgnoreCaseOrderByCreatedAtDesc(email);
+    public ResponseEntity<ApiResponse<List<Order>>> getHistory(
+            @AuthenticationPrincipal User user,
+            @RequestParam String email
+    ) {
+        boolean canViewOthersHistory = user != null && user.getAuthorities().stream()
+                .anyMatch(a -> "order.manage".equals(a.getAuthority()));
+        if (user != null && !user.getEmail().equalsIgnoreCase(email) && !canViewOthersHistory) {
+            throw new RuntimeException("Bạn không có quyền truy cập dữ liệu lịch sử đơn hàng của tài khoản khác.");
+        }
+
+        List<Order> orders = orderService.getHistory(email);
 
         ApiResponse<List<Order>> response = ApiResponse.<List<Order>>builder()
                 .timestamp(LocalDateTime.now())
@@ -72,6 +118,18 @@ public class OrderController {
                 .data(orders)
                 .build();
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<ApiResponse<DashboardStatsDto>> getDashboardStats() {
+        DashboardStatsDto stats = statsService.getDashboardStats();
+        ApiResponse<DashboardStatsDto> response = ApiResponse.<DashboardStatsDto>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Get dashboard stats success")
+                .data(stats)
+                .build();
         return ResponseEntity.ok(response);
     }
 }

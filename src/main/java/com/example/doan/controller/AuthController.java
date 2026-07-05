@@ -62,6 +62,33 @@ public class AuthController {
     }
 
     // =========================
+    // CAPTCHA
+    // =========================
+    @GetMapping("/captcha")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getCaptcha() {
+        java.util.Map<String, Object> captchaData = authService.generateCaptcha();
+        ApiResponse<java.util.Map<String, Object>> response = ApiResponse.<java.util.Map<String, Object>>builder()
+                .timestamp(java.time.LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Generate captcha success")
+                .data(captchaData)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // VERIFY OTP
+    // =========================
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyOtp(
+            @RequestParam String username,
+            @RequestParam String otp
+    ) {
+        ApiResponse<AuthResponse> response = authService.verifyOtp(username, otp);
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
     // LOGOUT
     // =========================
     @PostMapping("/logout")
@@ -88,6 +115,15 @@ public class AuthController {
         ApiResponse<AuthResponse> response =
                 authService.refreshToken(request);
 
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================
+    // RESEND OTP
+    // =========================
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse<Void>> resendOtp(@RequestParam String username) {
+        ApiResponse<Void> response = authService.resendOtp(username);
         return ResponseEntity.ok(response);
     }
 }

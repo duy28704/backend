@@ -13,4 +13,7 @@ public class LoginRequest {
 
     // password login
     private String password;
+
+    private String captchaId;
+    private String captchaAnswer;
 }

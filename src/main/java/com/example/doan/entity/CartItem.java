@@ -28,4 +28,8 @@ public class CartItem {
 
     @Column(name = "config", nullable = false)
     private String configuration;
+
+    private Double price;
+
+    private Double subtotal;
 }

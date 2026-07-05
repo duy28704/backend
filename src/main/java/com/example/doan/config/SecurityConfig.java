@@ -1,6 +1,7 @@
 package com.example.doan.config;
 
 import com.example.doan.filter.JwtFilter;
+import com.example.doan.filter.LoggingFilter;
 import com.example.doan.filter.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,8 @@ public class SecurityConfig {
 
     private final RateLimitFilter rateLimitFilter;
 
+    private final LoggingFilter loggingFilter;
+
      private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -51,7 +54,8 @@ public class SecurityConfig {
                         // public apis
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/error"
+                                "/error",
+                                "/api/v1/orders/vnpay-callback"
                         ).permitAll()
 
                         // public OPTIONS requests for CORS preflight
@@ -60,37 +64,105 @@ public class SecurityConfig {
                                 "/**"
                         ).permitAll()
 
-                        // public products view APIs
+                        // Users management APIs
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/v1/users"
+                        ).hasAuthority("users.read")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/v1/users"
+                        ).hasAuthority("users.create")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.PUT,
+                                "/api/v1/users/**"
+                        ).hasAuthority("users.update")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.DELETE,
+                                "/api/v1/users/**"
+                        ).hasAuthority("users.delete")
+
+                        // Product endpoints (Trash & Restore)
+                        .requestMatchers(
+                                "/api/v1/products/deleted"
+                        ).hasAuthority("product.trash")
+                        .requestMatchers(
+                                "/api/v1/products/*/restore"
+                        ).hasAuthority("product.restore")
+
+                        // public products view APIs (GET only, excluding trash)
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
                                 "/api/v1/products",
-                                "/api/v1/products/**"
+                                "/api/v1/products/**",
+                                "/api/v1/search"
                         ).permitAll()
 
-                        // ADMIN product modifications (CRUD/Import)
+                        // Search and stats management APIs
                         .requestMatchers(
-                                "/api/v1/products/**"
-                        ).hasAuthority("ADMIN")
+                                "/api/v1/search/stats"
+                        ).hasAuthority("stats.view")
+                        .requestMatchers(
+                                "/api/v1/search/sync"
+                        ).hasAuthority("product.update")
+                        .requestMatchers(
+                                "/api/v1/orders/dashboard-stats"
+                        ).hasAuthority("order.manage")
 
-                        // ADMIN APIs
+                        // Inventory management APIs
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/v1/inventory/**"
+                        ).hasAuthority("inventory.view")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/v1/inventory/**"
+                        ).hasAuthority("inventory.manage")
+
+                        // Product modifications
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/v1/products"
+                        ).hasAuthority("product.create")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/v1/products/upload"
+                        ).hasAnyAuthority("product.create", "product.update")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/v1/products/import"
+                        ).hasAuthority("product.import")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.PUT,
+                                "/api/v1/products/**"
+                        ).hasAuthority("product.update")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.DELETE,
+                                "/api/v1/products/**"
+                        ).hasAuthority("product.delete")
+
+                        // Generic ADMIN APIs
                         .requestMatchers(
                                 "/api/v1/admin/**"
-                        ).hasAuthority("ADMIN")
+                        ).hasRole("ADMIN")
 
-                        // STAFF APIs
+                        // Generic STAFF APIs
                         .requestMatchers(
                                 "/api/v1/staff/**"
-                        ).hasAnyAuthority(
-                                "STAFF",
-                                "ADMIN"
-                        )
+                        ).hasAnyRole("STAFF", "ADMIN")
 
-                        // CUSTOMER APIs
+                        // Generic CUSTOMER APIs
                         .requestMatchers(
                                 "/api/v1/customers/**"
-                        ).hasAuthority("CUSTOMER")
+                        ).hasRole("CUSTOMER")
 
                         .anyRequest().authenticated()
+                )
+
+                // Logging Filter
+                .addFilterBefore(
+                        loggingFilter,
+                        UsernamePasswordAuthenticationFilter.class
                 )
 
                 // Rate Limit Filter

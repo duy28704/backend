@@ -3,6 +3,8 @@ package com.example.doan.controller;
 import com.example.doan.entity.Installment;
 import com.example.doan.repository.InstallmentRepository;
 import com.example.doan.response.ApiResponse;
+import com.example.doan.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +42,16 @@ public class InstallmentController {
     }
 
     @GetMapping("/requests")
-    public ResponseEntity<ApiResponse<List<Installment>>> getRequests(@RequestParam String email) {
+    public ResponseEntity<ApiResponse<List<Installment>>> getRequests(
+            @AuthenticationPrincipal User user,
+            @RequestParam String email
+    ) {
+        boolean canViewOthersInstallments = user != null && user.getAuthorities().stream()
+                .anyMatch(a -> "stats.view".equals(a.getAuthority()));
+        if (user != null && !user.getEmail().equalsIgnoreCase(email) && !canViewOthersInstallments) {
+            throw new RuntimeException("Bạn không có quyền truy cập dữ liệu đăng ký trả góp của tài khoản khác.");
+        }
+
         List<Installment> requests = installmentRepository.findByEmailIgnoreCaseOrderByCreatedAtDesc(email);
 
         ApiResponse<List<Installment>> response = ApiResponse.<List<Installment>>builder()

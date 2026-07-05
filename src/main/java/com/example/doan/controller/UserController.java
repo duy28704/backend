@@ -62,6 +62,7 @@ public class UserController {
                 .name(request.getName() != null ? request.getName().trim() : "User")
                 .password(passwordEncoder.encode(request.getPassword() != null && !request.getPassword().trim().isEmpty() ? request.getPassword() : "Password123"))
                 .role(request.getRole() != null ? request.getRole().toUpperCase() : "CUSTOMER")
+                .customPermissions(request.getCustomPermissions())
                 .phone(request.getPhone())
                 .address(request.getAddress())
                 .dob(request.getDob())
@@ -98,6 +99,7 @@ public class UserController {
         if (request.getDob() != null) user.setDob(request.getDob());
         if (request.getGender() != null) user.setGender(request.getGender());
         if (request.getRole() != null) user.setRole(request.getRole().toUpperCase());
+        if (request.getCustomPermissions() != null) user.setCustomPermissions(request.getCustomPermissions());
         if (request.getEnabled() != null) user.setEnabled(request.getEnabled());
         if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
         

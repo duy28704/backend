@@ -1,14 +1,26 @@
 server:
-  port: ${PORT:8080}
+  port: 8080
 spring:
   application:
     name: doan
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/doan?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:vuhoangduy}
+    password: ${SPRING_DATASOURCE_PASSWORD:Vhd28704}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:vhd2872004@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:arqs kaup nnin xsck}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -25,9 +37,24 @@ spring:
         format_sql: false
 
 jwt:
-  secret: ${JWT_SECRET:VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY=}
+  secret: VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:deddrlyag}
-  api-key: ${CLOUDINARY_API_KEY:659455413236385}
-  api-secret: ${CLOUDINARY_API_SECRET:Ta2N98tJx-8LXJja98AafUbSwIQ}
+  cloud-name: deddrlyag
+  api-key: 659455413236385
+  api-secret: Ta2N98tJx-8LXJja98AafUbSwIQ
+
+logging:
+  level:
+    root: INFO
+    com.example.doan: DEBUG
+  file:
+    name: logs/application.log
+
+vnpay:
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  tmn-code: KUPG0O7F
+  hash-secret: VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY
+  return-url: http://localhost:8080/api/v1/orders/vnpay-callback
+  frontend-url: http://localhost:5173
+

@@ -3,6 +3,7 @@ package com.example.doan.config;
 import com.example.doan.entity.User;
 import com.example.doan.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -41,9 +43,9 @@ public class DataInitializer implements CommandLineRunner {
                     .build();
             
             userRepository.save(admin);
-            System.out.println("[DataInitializer] Successfully initialized Admin account: email=" + adminEmail + ", password=Password123");
+            log.info("Khởi tạo tài khoản Admin thành công: email={}, password=Password123", adminEmail);
         } else {
-            System.out.println("[DataInitializer] Admin account already exists, skipping initialization.");
+            log.info("Tài khoản Admin đã tồn tại trên hệ thống, bỏ qua bước khởi tạo.");
         }
     }
 }

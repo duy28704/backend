@@ -35,6 +35,9 @@ public class Order {
     private Double subtotal;
     private Double shipping;
     private Double total;
+
+    @Transient
+    private String paymentUrl;
     
     @Builder.Default
     private Instant createdAt = Instant.now();

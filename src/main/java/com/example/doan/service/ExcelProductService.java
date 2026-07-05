@@ -5,6 +5,7 @@ import com.example.doan.dto.LaptopRequest;
 import com.example.doan.excel.ExcelColumn;
 import com.example.doan.response.ExcelError;
 import com.example.doan.response.ExcelResult;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 @Service
+@Slf4j
 public class ExcelProductService {
 
     private final DataFormatter formatter = new DataFormatter();
@@ -26,7 +28,7 @@ public class ExcelProductService {
             Class<T> clazz
     ) throws Exception {
 
-
+        log.info("Bắt đầu phân tích tệp Excel: '{}' cho thực thể {}", file.getOriginalFilename(), clazz.getSimpleName());
         List<T> result = new ArrayList<>();
 
         // Danh sách lỗi trong quá trình import
@@ -71,6 +73,7 @@ public class ExcelProductService {
 
                     // ========== REQUIRED VALIDATION ==========
                     if (col.required() && (rawValue == null || rawValue.isBlank())) {
+                        log.warn("Dòng {} lỗi: Cột '{}' là bắt buộc nhưng không có dữ liệu", i + 1, col.value());
                         errors.add(new ExcelError(
                                 i + 1, // +1 vì Excel bắt đầu từ 1
                                 col.value(),
@@ -88,11 +91,12 @@ public class ExcelProductService {
 
                         // Nếu đã tồn tại trong Set → duplicate
                         if (!excelUniqueCheck.add(converted)) {
+                            log.warn("Dòng {} lỗi: Cột '{}' chứa dữ liệu trùng lặp trong Excel: '{}'", i + 1, col.value(), converted);
                             errors.add(new ExcelError(
                                     i + 1,
                                     col.value(),
                                     "Duplicate in Excel"
-                            ));
+                             ));
                             rowHasError = true;
                         }
                     }
@@ -111,6 +115,7 @@ public class ExcelProductService {
             }
         }
 
+        log.info("Phân tích tệp Excel hoàn tất. Thành công: {}, Thất bại (Lỗi): {}", result.size(), errors.size());
         return new ExcelResult<>(result, errors);
     }
 

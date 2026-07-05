@@ -13,11 +13,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -54,7 +56,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 token = authHeader.substring(7);
                 username = jwtUtil.extractUsername(token);
             } catch (Exception e) {
-                System.err.println("[JwtFilter] Failed to parse JWT: " + e.getMessage());
+                log.error("Lỗi phân tích mã token JWT: {}", e.getMessage());
             }
         }
 

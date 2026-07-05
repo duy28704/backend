@@ -20,6 +20,8 @@ public class CartItemMapperImpl implements CartItemMapper {
                 .id(item.getProduct().getId())
                 .quantity(item.getQuantity())
                 .configuration(item.getConfiguration())
+                .price(item.getPrice())
+                .subtotal(item.getSubtotal())
                 .build();
     }
 

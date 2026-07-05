@@ -16,6 +16,9 @@ public class AuthResponse {
     // role user
     private String role;
 
+    // permissions user
+    private java.util.List<String> permissions;
+
     // username
     private String username;
 

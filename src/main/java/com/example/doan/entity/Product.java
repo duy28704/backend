@@ -57,6 +57,12 @@ public abstract class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "stock_quantity", nullable = false)
+    private Integer stockQuantity = 50;
+
+    @Column(name = "low_stock_threshold", nullable = false)
+    private Integer lowStockThreshold = 10;
+
     @Column(nullable = false)
     private boolean deleted = false;
 

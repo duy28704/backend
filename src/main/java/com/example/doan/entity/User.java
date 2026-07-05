@@ -44,6 +44,9 @@ public class User implements UserDetails {
 
     private String role;
 
+    @Column(name = "custom_permissions", length = 1000)
+    private String customPermissions;
+
     private Boolean enabled;
 
     private Boolean accountNonLocked;
@@ -58,7 +61,53 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+        if (role != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            authorities.add(new SimpleGrantedAuthority(role));
+            getActivePermissions().forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
+        }
+        return authorities;
+    }
+
+    public List<String> getActivePermissions() {
+        if (customPermissions != null && !customPermissions.trim().isEmpty()) {
+            return java.util.Arrays.stream(customPermissions.split(","))
+                    .map(String::trim)
+                    .filter(p -> !p.isEmpty())
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return getPermissionsByRole(role);
+    }
+
+    public static List<String> getPermissionsByRole(String role) {
+        if (role == null) return List.of();
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return List.of(
+                    "users.read", "users.create", "users.update", "users.delete",
+                    "product.view", "product.create", "product.update", "product.delete", "product.hard-delete", "product.import", "product.trash", "product.restore",
+                    "inventory.view", "inventory.manage",
+                    "stats.view",
+                    "order.checkout", "order.view", "order.manage",
+                    "installment.submit", "installment.view",
+                    "settings.manage"
+            );
+        } else if ("STAFF".equalsIgnoreCase(role)) {
+            return List.of(
+                    "product.view", "product.create", "product.update", "product.delete", "product.import",
+                    "inventory.view", "inventory.manage",
+                    "stats.view",
+                    "order.view", "order.manage",
+                    "installment.view"
+            );
+        } else if ("CUSTOMER".equalsIgnoreCase(role)) {
+            return List.of(
+                    "product.view",
+                    "order.checkout", "order.view",
+                    "installment.submit", "installment.view"
+            );
+        }
+        return List.of();
     }
 
     @Override

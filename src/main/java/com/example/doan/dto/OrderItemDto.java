@@ -1,18 +1,16 @@
 package com.example.doan.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class CartItemDto {
+public class OrderItemDto {
     private Long id;
     private Integer quantity;
-    private String configuration;
+    private String name;
     private Double price;
-    private Double subtotal;
+    private String configuration;
 }

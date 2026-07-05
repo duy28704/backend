@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Slf4j
 public class RateLimitFilter
         extends OncePerRequestFilter {
 
@@ -60,13 +62,14 @@ public class RateLimitFilter
                 filterChain.doFilter(request, response);
             } else {
                 // quá giới hạn request
+                log.warn("Vượt quá giới hạn lượt yêu cầu (Rate Limit) cho IP: {} trên URI: {}", ip, request.getRequestURI());
                 response.setStatus(429);
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
                 response.getWriter().write("{\"status\": 429, \"message\": \"Too Many Requests / Yêu cầu quá thường xuyên\", \"data\": null}");
             }
         } catch (Exception e) {
-            System.err.println("[RateLimitFilter] Error checking rate limit: " + e.getMessage());
+            log.error("Lỗi khi kiểm tra giới hạn lượt yêu cầu cho IP: {}", request.getRemoteAddr(), e);
             filterChain.doFilter(request, response);
         }
     }
