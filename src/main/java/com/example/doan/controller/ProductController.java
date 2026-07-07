@@ -119,6 +119,32 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteMultipleProducts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(value = "ids") List<Long> ids,
+            @RequestParam(value = "hard", required = false, defaultValue = "false") boolean hard
+    ) {
+        boolean hasHardDeletePermission = user != null && user.getAuthorities().stream()
+                .anyMatch(a -> "product.hard-delete".equals(a.getAuthority()));
+        if (hard && !hasHardDeletePermission) {
+            throw new RuntimeException("Bạn không có quyền xóa vĩnh viễn sản phẩm khỏi hệ thống.");
+        }
+        
+        if (hard) {
+            productService.hardDeleteLaptops(ids);
+        } else {
+            productService.softDeleteLaptops(ids);
+        }
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message(hard ? "Hard delete products success" : "Soft delete products success")
+                .data(null)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
     // =========================
     // IMPORT PRODUCTS BY EXCEL
     // =========================
@@ -163,6 +189,20 @@ public class ProductController {
                 .status(HttpStatus.OK.value())
                 .message("Restore product success")
                 .data(laptop)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/restore")
+    public ResponseEntity<ApiResponse<Void>> restoreMultipleProducts(
+            @RequestParam(value = "ids") List<Long> ids
+    ) {
+        productService.restoreLaptops(ids);
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Restore products success")
+                .data(null)
                 .build();
         return ResponseEntity.ok(response);
     }

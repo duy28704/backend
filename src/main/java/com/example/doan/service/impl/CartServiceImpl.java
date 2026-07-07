@@ -116,32 +116,8 @@ public class CartServiceImpl implements CartService {
         cartItemRepository.deleteByUser(user);
     }
 
-    private Double parsePrice(String priceStr) {
-        if (priceStr == null || priceStr.trim().isEmpty()) {
-            return 0.0;
-        }
-        String str = priceStr.trim();
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("([0-9.,]+)\\s*₫");
-        java.util.regex.Matcher matcher = pattern.matcher(str);
-        if (matcher.find()) {
-            String cleaned = matcher.group(1).replaceAll("[^0-9]", "");
-            try {
-                return Double.parseDouble(cleaned);
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-        }
-        java.util.regex.Pattern digitPattern = java.util.regex.Pattern.compile("[0-9.]+");
-        java.util.regex.Matcher digitMatcher = digitPattern.matcher(str);
-        if (digitMatcher.find()) {
-            String cleaned = digitMatcher.group().replaceAll("[^0-9]", "");
-            try {
-                return Double.parseDouble(cleaned);
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-        }
-        return 0.0;
+    private Double parsePrice(Double price) {
+        return price != null ? price : 0.0;
     }
 
     private Double getPriceForConfig(Double basePrice, String configuration) {

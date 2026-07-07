@@ -117,6 +117,24 @@ public class ProductService {
     }
 
     @Transactional
+    public void softDeleteLaptops(List<Long> ids) {
+        log.info("Thực hiện xóa tạm thời danh sách sản phẩm laptop IDs={}", ids);
+        for (Long id : ids) {
+            try {
+                Laptop laptop = findLaptopById(id);
+                laptop.setDeleted(true);
+                laptop.setDeletedAt(Instant.now());
+                laptop.setUpdatedAt(Instant.now());
+                laptopRepository.save(laptop);
+                searchService.deleteProduct(id);
+            } catch (Exception e) {
+                log.error("Lỗi khi xóa tạm thời sản phẩm ID={}: {}", id, e.getMessage());
+            }
+        }
+        log.info("Đã hoàn tất xóa tạm thời danh sách sản phẩm");
+    }
+
+    @Transactional
     public void hardDeleteLaptop(Long id) {
         log.info("Thực hiện xóa vĩnh viễn sản phẩm laptop ID={}", id);
         Laptop laptop = findLaptopById(id);
@@ -128,6 +146,22 @@ public class ProductService {
         
         laptopRepository.delete(laptop);
         log.info("Đã xóa vĩnh viễn sản phẩm laptop ID={} thành công", id);
+    }
+
+    @Transactional
+    public void hardDeleteLaptops(List<Long> ids) {
+        log.info("Thực hiện xóa vĩnh viễn danh sách sản phẩm laptop IDs={}", ids);
+        for (Long id : ids) {
+            try {
+                Laptop laptop = findLaptopById(id);
+                deleteProductImagesFromCloudinary(laptop);
+                searchService.deleteProduct(id);
+                laptopRepository.delete(laptop);
+            } catch (Exception e) {
+                log.error("Lỗi khi xóa vĩnh viễn sản phẩm ID={}: {}", id, e.getMessage());
+            }
+        }
+        log.info("Đã hoàn tất xóa vĩnh viễn danh sách sản phẩm");
     }
 
     private void deleteProductImagesFromCloudinary(Laptop laptop) {
@@ -159,6 +193,24 @@ public class ProductService {
         log.info("Khôi phục sản phẩm laptop ID={} thành công", id);
         searchService.indexProduct(saved);
         return saved;
+    }
+
+    @Transactional
+    public void restoreLaptops(List<Long> ids) {
+        log.info("Khôi phục danh sách sản phẩm laptop đã bị xóa IDs={}", ids);
+        for (Long id : ids) {
+            try {
+                Laptop laptop = findLaptopById(id);
+                laptop.setDeleted(false);
+                laptop.setDeletedAt(null);
+                laptop.setUpdatedAt(Instant.now());
+                Laptop saved = laptopRepository.save(laptop);
+                searchService.indexProduct(saved);
+            } catch (Exception e) {
+                log.error("Lỗi khi khôi phục sản phẩm ID={}: {}", id, e.getMessage());
+            }
+        }
+        log.info("Đã hoàn tất khôi phục danh sách sản phẩm");
     }
 
     @Transactional
@@ -196,7 +248,7 @@ public class ProductService {
 
     private void applyRequest(Laptop laptop, LaptopRequest request) {
         laptop.setName(request.getName().trim());
-        laptop.setPrice(trimToNull(request.getPrice()));
+        laptop.setPrice(parseDouble(request.getPrice()));
         laptop.setLink(trimToNull(request.getLink()));
         laptop.setImages(trimToNull(request.getImages()));
         laptop.setBrand(trimToNull(request.getBrand()));
@@ -252,8 +304,8 @@ public class ProductService {
         laptop.setRating(request.getRating() != null ? request.getRating() : 5.0);
         laptop.setReviewCount(request.getReviewCount() != null ? request.getReviewCount() : 0);
 
-        laptop.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 50);
-        laptop.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 10);
+        laptop.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0);
+        laptop.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 0);
 
         laptop.setDeleted(false);
         laptop.setDeletedAt(null);
@@ -262,7 +314,7 @@ public class ProductService {
 
     private void applyExcelRequest(Laptop laptop, LaptopExcelRequest request) {
         laptop.setName(request.getName().trim());
-        laptop.setPrice(trimToNull(request.getPrice()));
+        laptop.setPrice(parseDouble(request.getPrice()));
         laptop.setLink(trimToNull(request.getLink()));
         laptop.setImages(trimToNull(request.getImages()));
         laptop.setBrand(trimToNull(request.getBrand()));
@@ -318,8 +370,8 @@ public class ProductService {
         laptop.setRating(request.getRating() != null ? request.getRating() : 5.0);
         laptop.setReviewCount(request.getReviewCount() != null ? request.getReviewCount() : 0);
 
-        laptop.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 50);
-        laptop.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 10);
+        laptop.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0);
+        laptop.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 0);
 
         laptop.setDeleted(false);
         laptop.setDeletedAt(null);
@@ -343,6 +395,29 @@ public class ProductService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private Double parseDouble(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String str = String.valueOf(value).trim();
+        if (str.isEmpty()) {
+            return null;
+        }
+        try {
+            String clean = str.replaceAll("[\\s₫$eE]", ""); // remove currency/spaces/exponent
+            if (clean.matches(".*\\d+\\.\\d{3}.*")) {
+                clean = clean.replace(".", "");
+            } else if (clean.matches(".*\\d+,\\d{3}.*")) {
+                clean = clean.replace(",", "");
+            }
+            clean = clean.replace(",", ".");
+            return Double.parseDouble(clean);
+        } catch (Exception e) {
+            log.error("Lỗi khi chuyển đổi giá '{}' sang Double", value, e);
+            return null;
+        }
     }
 }
 

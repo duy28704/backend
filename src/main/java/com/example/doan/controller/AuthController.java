@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.example.doan.service.TurnstileService turnstileService;
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
             @RequestBody RegisterRequest request
@@ -62,8 +63,20 @@ public class AuthController {
     }
 
     // =========================
-    // CAPTCHA
+    // CAPTCHA / TURNSTILE
     // =========================
+    @GetMapping("/turnstile-config")
+    public ResponseEntity<ApiResponse<java.util.Map<String, String>>> getTurnstileConfig() {
+        java.util.Map<String, String> data = java.util.Map.of("siteKey", turnstileService.getSiteKey());
+        ApiResponse<java.util.Map<String, String>> response = ApiResponse.<java.util.Map<String, String>>builder()
+                .timestamp(java.time.LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .message("Get turnstile config success")
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/captcha")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getCaptcha() {
         java.util.Map<String, Object> captchaData = authService.generateCaptcha();

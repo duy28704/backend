@@ -39,6 +39,8 @@ public class AuthService {
     private final EmailService emailService;
     private final CaptchaRepository captchaRepository;
     private final OtpRepository otpRepository;
+    private final TurnstileService turnstileService;
+    private final com.example.doan.repository.EmailQueueRepository emailQueueRepository;
 
     public Map<String, Object> generateCaptcha() {
         java.time.Instant now = java.time.Instant.now();
@@ -168,10 +170,17 @@ public class AuthService {
     public ApiResponse<AuthResponse> login(
             LoginRequest request
     ) {
-        // 1. Validate CAPTCHA
-        if (!validateCaptcha(request.getCaptchaId(), request.getCaptchaAnswer())) {
-            log.warn("Đăng nhập thất bại: Mã CAPTCHA không chính xác hoặc đã hết hạn.");
-            throw new RuntimeException("Mã CAPTCHA không chính xác hoặc đã hết hạn.");
+        // 1. Validate CAPTCHA (Cloudflare Turnstile token or fallback text CAPTCHA)
+        boolean isCaptchaValid = false;
+        if (request.getTurnstileToken() != null && !request.getTurnstileToken().trim().isEmpty()) {
+            isCaptchaValid = turnstileService.verifyToken(request.getTurnstileToken());
+        } else {
+            isCaptchaValid = validateCaptcha(request.getCaptchaId(), request.getCaptchaAnswer());
+        }
+
+        if (!isCaptchaValid) {
+            log.warn("Đăng nhập thất bại: Xác minh bảo mật (CAPTCHA) không chính xác hoặc đã hết hạn.");
+            throw new RuntimeException("Xác minh bảo mật (CAPTCHA) không thành công. Vui lòng thử lại.");
         }
 
         String identifier = request.getEmail() != null ? request.getEmail() : request.getUsername();
@@ -219,6 +228,18 @@ public class AuthService {
         otpRepository.save(otp);
 
         emailService.sendOtp(user.getEmail(), otpCode);
+
+        try {
+            emailQueueRepository.save(com.example.doan.entity.EmailQueue.builder()
+                    .templateCode("OTP_LOGIN")
+                    .recipientEmail(user.getEmail())
+                    .subject("Mã xác thực OTP đăng nhập NEXUS Tech: " + otpCode)
+                    .bodyHtml("<p>Mã xác thực OTP đăng nhập vào hệ thống NEXUS Tech của bạn là: <strong>" + otpCode + "</strong></p>")
+                    .status("SENT")
+                    .sentAt(java.time.Instant.now())
+                    .createdAt(java.time.Instant.now())
+                    .build());
+        } catch (Exception e) {}
 
         AuthResponse authResponse = AuthResponse.builder()
                 .username(user.getUsername())

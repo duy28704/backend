@@ -33,6 +33,7 @@ public class OrderService {
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final ObjectMapper objectMapper;
     private final VnPayService vnPayService;
+    private final NotificationService notificationService;
 
     @Transactional
     public Order checkout(Order order, HttpServletRequest request) {
@@ -101,6 +102,17 @@ public class OrderService {
                         .build();
 
                 inventoryTransactionRepository.save(transaction);
+
+                // Cảnh báo tồn kho nếu < 5 sản phẩm
+                if (newStock < 5) {
+                    notificationService.notifyAllAdmins(
+                            "Cảnh báo tồn kho: " + laptop.getName(),
+                            "Sản phẩm '" + laptop.getName() + "' (ID " + laptop.getId() + ") chỉ còn " + newStock + " chiếc trong kho!",
+                            com.example.doan.entity.NotificationType.INVENTORY,
+                            String.valueOf(laptop.getId()),
+                            "/admin/products"
+                    );
+                }
             }
         } catch (IllegalArgumentException e) {
             throw e;
@@ -111,6 +123,31 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Tạo đơn hàng thành công: Mã đơn={}, Tổng tiền={}, Số lượng sản phẩm={}", savedOrder.getId(), savedOrder.getTotal(), savedOrder.getItemsJson() != null ? "JSON" : "0");
+
+        // Gửi thông báo cho khách hàng & Admin
+        try {
+            Optional<User> userOpt = userRepository.findByEmail(order.getEmail());
+            String username = userOpt.isPresent() ? userOpt.get().getUsername() : order.getEmail();
+
+            notificationService.createNotification(
+                    username,
+                    "Đặt hàng thành công #" + savedOrder.getId(),
+                    "Đơn hàng #" + savedOrder.getId() + " trị giá " + String.format("%,d", Math.round(savedOrder.getTotal())) + "đ đã được khởi tạo thành công.",
+                    com.example.doan.entity.NotificationType.ORDER,
+                    savedOrder.getId(),
+                    "/profile"
+            );
+
+            notificationService.notifyAllAdmins(
+                    "Đơn hàng mới #" + savedOrder.getId(),
+                    "Khách hàng " + savedOrder.getCustomerName() + " vừa đặt đơn hàng #" + savedOrder.getId() + " trị giá " + String.format("%,d", Math.round(savedOrder.getTotal())) + "đ.",
+                    com.example.doan.entity.NotificationType.ORDER,
+                    savedOrder.getId(),
+                    "/admin/orders"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi tạo thông báo đặt hàng: {}", e.getMessage());
+        }
 
         if ("vnpay".equalsIgnoreCase(savedOrder.getPaymentMethod())) {
             String paymentUrl = vnPayService.createPaymentUrl(savedOrder.getId(), savedOrder.getTotal(), request);

@@ -87,6 +87,7 @@ public class SecurityConfig {
                                 "/api/v1/products/deleted"
                         ).hasAuthority("product.trash")
                         .requestMatchers(
+                                "/api/v1/products/restore",
                                 "/api/v1/products/*/restore"
                         ).hasAuthority("product.restore")
 
@@ -138,6 +139,7 @@ public class SecurityConfig {
                         ).hasAuthority("product.update")
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.DELETE,
+                                "/api/v1/products",
                                 "/api/v1/products/**"
                         ).hasAuthority("product.delete")
 

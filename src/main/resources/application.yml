@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   mail:
-    host: ${SPRING_MAIL_HOST:localhost}
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
     port: ${SPRING_MAIL_PORT:587}
     username: ${SPRING_MAIL_USERNAME:vhd2872004@gmail.com}
     password: ${SPRING_MAIL_PASSWORD:arqs kaup nnin xsck}
@@ -57,4 +57,11 @@ vnpay:
   hash-secret: VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY
   return-url: http://localhost:8080/api/v1/orders/vnpay-callback
   frontend-url: http://localhost:5173
+
+cloudflare:
+  turnstile:
+    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:0x4AAAAAADwNsYfwazyDLf__teh08C_xUR0}
+    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY:0x4AAAAAADwNsSvJ_osyapea}
+    verify-url: https://challenges.cloudflare.com/turnstile/v0/siteverify
+
 

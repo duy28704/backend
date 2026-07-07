@@ -24,8 +24,7 @@ public abstract class Product {
     @Column(nullable = false, length = 1000)
     private String name;
 
-    @Column(length = 1000)
-    private String price;
+    private Double price;
 
     @Column(length = 1500, unique = true)
     private String link;
@@ -58,10 +57,10 @@ public abstract class Product {
     private String description;
 
     @Column(name = "stock_quantity", nullable = false)
-    private Integer stockQuantity = 50;
+    private Integer stockQuantity = 0;
 
     @Column(name = "low_stock_threshold", nullable = false)
-    private Integer lowStockThreshold = 10;
+    private Integer lowStockThreshold = 0;
 
     @Column(nullable = false)
     private boolean deleted = false;

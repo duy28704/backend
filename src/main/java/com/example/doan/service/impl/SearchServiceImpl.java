@@ -200,13 +200,9 @@ public class SearchServiceImpl implements SearchService {
         // Filter by price in memory since price is stored as String in DB
         if (minPrice != null || maxPrice != null) {
             dbLaptops = dbLaptops.stream().filter(l -> {
-                try {
-                    double p = Double.parseDouble(l.getPrice());
-                    if (minPrice != null && p < minPrice) return false;
-                    if (maxPrice != null && p > maxPrice) return false;
-                } catch (Exception e) {
-                    return false;
-                }
+                double p = l.getPrice() != null ? l.getPrice() : 0.0;
+                if (minPrice != null && p < minPrice) return false;
+                if (maxPrice != null && p > maxPrice) return false;
                 return true;
             }).collect(Collectors.toList());
         }
@@ -220,11 +216,9 @@ public class SearchServiceImpl implements SearchService {
                 if (brandFilter != null && !l.getBrand().equalsIgnoreCase(brandFilter)) return false;
                 if (categoryFilter != null && !l.getCategory().equalsIgnoreCase(categoryFilter)) return false;
                 
-                try {
-                    double p = Double.parseDouble(l.getPrice());
-                    if (minPrice != null && p < minPrice) return false;
-                    if (maxPrice != null && p > maxPrice) return false;
-                } catch (Exception e) {}
+                double p = l.getPrice() != null ? l.getPrice() : 0.0;
+                if (minPrice != null && p < minPrice) return false;
+                if (maxPrice != null && p > maxPrice) return false;
 
                 // Check distance
                 String pName = l.getName().toLowerCase();
@@ -277,12 +271,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private LaptopDocument mapToDocument(Laptop laptop) {
-        Double priceVal = 0.0;
-        try {
-            priceVal = Double.parseDouble(laptop.getPrice());
-        } catch (Exception e) {
-            log.error("Không thể chuyển đổi giá sản phẩm thành số thực cho ID={} | giá={}", laptop.getId(), laptop.getPrice());
-        }
+        Double priceVal = laptop.getPrice() != null ? laptop.getPrice() : 0.0;
 
         return LaptopDocument.builder()
                 .id(laptop.getId())

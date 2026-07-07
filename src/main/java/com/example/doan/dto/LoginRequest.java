@@ -16,4 +16,5 @@ public class LoginRequest {
 
     private String captchaId;
     private String captchaAnswer;
+    private String turnstileToken;
 }
