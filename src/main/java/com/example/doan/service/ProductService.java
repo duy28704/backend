@@ -4,6 +4,7 @@ package com.example.doan.service;
 import com.example.doan.dto.LaptopExcelRequest;
 import com.example.doan.dto.LaptopRequest;
 import com.example.doan.entity.Laptop;
+import com.example.doan.entity.NotificationType;
 import com.example.doan.entity.Product;
 import com.example.doan.excel.ExcelColumn;
 import com.example.doan.repository.LaptopRepository;
@@ -15,6 +16,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,17 +35,32 @@ public class ProductService {
     private final ExcelProductService excelProductService;
     private final CloudinaryService cloudinaryService;
     private final SearchService searchService;
+    private final NotificationService notificationService;
 
     public ProductService(
             LaptopRepository laptopRepository,
             ExcelProductService excelProductService,
             CloudinaryService cloudinaryService,
-            SearchService searchService
+            SearchService searchService,
+            NotificationService notificationService
     ) {
         this.laptopRepository = laptopRepository;
         this.excelProductService = excelProductService;
         this.cloudinaryService = cloudinaryService;
         this.searchService = searchService;
+        this.notificationService = notificationService;
+    }
+
+    private String getCurrentUsername() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                return auth.getName();
+            }
+        } catch (Exception e) {
+            log.warn("Không thể lấy thông tin người dùng hiện tại: {}", e.getMessage());
+        }
+        return "Hệ thống";
     }
 
     public List<Laptop> findAllLaptops(boolean includeDeleted) {
@@ -71,6 +89,21 @@ public class ProductService {
         Laptop saved = laptopRepository.save(laptop);
         log.info("Tạo sản phẩm laptop thành công: ID={}, Tên='{}'", saved.getId(), saved.getName());
         searchService.indexProduct(saved);
+
+        // Gửi thông báo cho Admin/Staff
+        try {
+            String operator = getCurrentUsername();
+            notificationService.notifyAllAdmins(
+                    "Sản phẩm mới: " + saved.getName(),
+                    operator + " đã thêm sản phẩm '" + saved.getName() + "' (ID " + saved.getId() + ") vào hệ thống.",
+                    NotificationType.SYSTEM,
+                    String.valueOf(saved.getId()),
+                    "/admin/products"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo thêm sản phẩm: {}", e.getMessage());
+        }
+
         return saved;
     }
 
@@ -101,6 +134,21 @@ public class ProductService {
         Laptop saved = laptopRepository.save(laptop);
         log.info("Cập nhật thông tin sản phẩm laptop ID={} thành công", id);
         searchService.indexProduct(saved);
+
+        // Gửi thông báo cho Admin/Staff
+        try {
+            String operator = getCurrentUsername();
+            notificationService.notifyAllAdmins(
+                    "Cập nhật sản phẩm: " + saved.getName(),
+                    operator + " đã cập nhật sản phẩm '" + saved.getName() + "' (ID " + saved.getId() + ").",
+                    NotificationType.SYSTEM,
+                    String.valueOf(saved.getId()),
+                    "/admin/products"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo cập nhật sản phẩm: {}", e.getMessage());
+        }
+
         return saved;
     }
 
@@ -108,20 +156,37 @@ public class ProductService {
     public void softDeleteLaptop(Long id) {
         log.info("Thực hiện xóa tạm thời sản phẩm laptop ID={}", id);
         Laptop laptop = findLaptopById(id);
+        String productName = laptop.getName();
         laptop.setDeleted(true);
         laptop.setDeletedAt(Instant.now());
         laptop.setUpdatedAt(Instant.now());
         laptopRepository.save(laptop);
         log.info("Đã xóa tạm thời sản phẩm laptop ID={} thành công", id);
         searchService.deleteProduct(id);
+
+        // Gửi thông báo cho Admin/Staff
+        try {
+            String operator = getCurrentUsername();
+            notificationService.notifyAllAdmins(
+                    "Xóa sản phẩm: " + productName,
+                    operator + " đã chuyển sản phẩm '" + productName + "' (ID " + id + ") vào thùng rác.",
+                    NotificationType.SYSTEM,
+                    String.valueOf(id),
+                    "/admin/trash"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo xóa sản phẩm: {}", e.getMessage());
+        }
     }
 
     @Transactional
     public void softDeleteLaptops(List<Long> ids) {
         log.info("Thực hiện xóa tạm thời danh sách sản phẩm laptop IDs={}", ids);
+        List<String> deletedNames = new ArrayList<>();
         for (Long id : ids) {
             try {
                 Laptop laptop = findLaptopById(id);
+                deletedNames.add(laptop.getName());
                 laptop.setDeleted(true);
                 laptop.setDeletedAt(Instant.now());
                 laptop.setUpdatedAt(Instant.now());
@@ -132,12 +197,29 @@ public class ProductService {
             }
         }
         log.info("Đã hoàn tất xóa tạm thời danh sách sản phẩm");
+
+        // Gửi thông báo cho Admin/Staff
+        if (!deletedNames.isEmpty()) {
+            try {
+                String operator = getCurrentUsername();
+                notificationService.notifyAllAdmins(
+                        "Xóa hàng loạt: " + deletedNames.size() + " sản phẩm",
+                        operator + " đã chuyển " + deletedNames.size() + " sản phẩm vào thùng rác: " + String.join(", ", deletedNames) + ".",
+                        NotificationType.SYSTEM,
+                        null,
+                        "/admin/trash"
+                );
+            } catch (Exception e) {
+                log.error("Lỗi khi gửi thông báo xóa hàng loạt: {}", e.getMessage());
+            }
+        }
     }
 
     @Transactional
     public void hardDeleteLaptop(Long id) {
         log.info("Thực hiện xóa vĩnh viễn sản phẩm laptop ID={}", id);
         Laptop laptop = findLaptopById(id);
+        String productName = laptop.getName();
         
         // Delete images from Cloudinary
         deleteProductImagesFromCloudinary(laptop);
@@ -146,14 +228,30 @@ public class ProductService {
         
         laptopRepository.delete(laptop);
         log.info("Đã xóa vĩnh viễn sản phẩm laptop ID={} thành công", id);
+
+        // Gửi thông báo cho Admin/Staff
+        try {
+            String operator = getCurrentUsername();
+            notificationService.notifyAllAdmins(
+                    "Xóa vĩnh viễn: " + productName,
+                    operator + " đã xóa vĩnh viễn sản phẩm '" + productName + "' (ID " + id + ") khỏi hệ thống.",
+                    NotificationType.SYSTEM,
+                    null,
+                    "/admin/products"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo xóa vĩnh viễn sản phẩm: {}", e.getMessage());
+        }
     }
 
     @Transactional
     public void hardDeleteLaptops(List<Long> ids) {
         log.info("Thực hiện xóa vĩnh viễn danh sách sản phẩm laptop IDs={}", ids);
+        List<String> deletedNames = new ArrayList<>();
         for (Long id : ids) {
             try {
                 Laptop laptop = findLaptopById(id);
+                deletedNames.add(laptop.getName());
                 deleteProductImagesFromCloudinary(laptop);
                 searchService.deleteProduct(id);
                 laptopRepository.delete(laptop);
@@ -162,6 +260,22 @@ public class ProductService {
             }
         }
         log.info("Đã hoàn tất xóa vĩnh viễn danh sách sản phẩm");
+
+        // Gửi thông báo cho Admin/Staff
+        if (!deletedNames.isEmpty()) {
+            try {
+                String operator = getCurrentUsername();
+                notificationService.notifyAllAdmins(
+                        "Xóa vĩnh viễn: " + deletedNames.size() + " sản phẩm",
+                        operator + " đã xóa vĩnh viễn " + deletedNames.size() + " sản phẩm: " + String.join(", ", deletedNames) + ".",
+                        NotificationType.SYSTEM,
+                        null,
+                        "/admin/products"
+                );
+            } catch (Exception e) {
+                log.error("Lỗi khi gửi thông báo xóa vĩnh viễn hàng loạt: {}", e.getMessage());
+            }
+        }
     }
 
     private void deleteProductImagesFromCloudinary(Laptop laptop) {
@@ -192,6 +306,21 @@ public class ProductService {
         Laptop saved = laptopRepository.save(laptop);
         log.info("Khôi phục sản phẩm laptop ID={} thành công", id);
         searchService.indexProduct(saved);
+
+        // Gửi thông báo cho Admin/Staff
+        try {
+            String operator = getCurrentUsername();
+            notificationService.notifyAllAdmins(
+                    "Khôi phục sản phẩm: " + saved.getName(),
+                    operator + " đã khôi phục sản phẩm '" + saved.getName() + "' (ID " + saved.getId() + ") từ thùng rác.",
+                    NotificationType.SYSTEM,
+                    String.valueOf(saved.getId()),
+                    "/admin/products"
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo khôi phục sản phẩm: {}", e.getMessage());
+        }
+
         return saved;
     }
 
@@ -221,6 +350,20 @@ public class ProductService {
         if (!parsed.isHasError() && parsed.getData() != null && !parsed.getData().isEmpty()) {
             savedLaptops = createManyLaptopsFromExcel(parsed.getData());
             log.info("Import file Excel thành công, đã lưu thêm {} sản phẩm mới", savedLaptops.size());
+
+            // Gửi thông báo cho Admin/Staff
+            try {
+                String operator = getCurrentUsername();
+                notificationService.notifyAllAdmins(
+                        "Import Excel: " + savedLaptops.size() + " sản phẩm",
+                        operator + " đã import thành công " + savedLaptops.size() + " sản phẩm từ file '" + file.getOriginalFilename() + "'.",
+                        NotificationType.SYSTEM,
+                        null,
+                        "/admin/products"
+                );
+            } catch (Exception e) {
+                log.error("Lỗi khi gửi thông báo import Excel: {}", e.getMessage());
+            }
         } else if (parsed.isHasError()) {
             log.warn("Import file Excel hoàn tất nhưng có lỗi, số dòng bị lỗi: {}", parsed.getErrors().size());
         }
