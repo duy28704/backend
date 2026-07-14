@@ -1,67 +1,69 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT}
+
 spring:
   application:
     name: doan
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/doan?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${SPRING_DATASOURCE_USERNAME:vuhoangduy}
-    password: ${SPRING_DATASOURCE_PASSWORD:Vhd28704}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
 
   mail:
-    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
-    port: ${SPRING_MAIL_PORT:587}
-    username: ${SPRING_MAIL_USERNAME:vhd2872004@gmail.com}
-    password: ${SPRING_MAIL_PASSWORD:arqs kaup nnin xsck}
+    host: ${SPRING_MAIL_HOST}
+    port: ${SPRING_MAIL_PORT}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      idle-timeout: 30000
+
   jpa:
     hibernate:
-      ddl-auto: update
-
-
-    show-sql: false
-
+      ddl-auto: ${SPRING_JPA_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: false
 
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS}
+    username: ${SPRING_ELASTICSEARCH_USERNAME}
+    password: ${SPRING_ELASTICSEARCH_PASSWORD}
+
 jwt:
-  secret: VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY
+  secret: ${JWT_SECRET:VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY}
 
 cloudinary:
-  cloud-name: deddrlyag
-  api-key: 659455413236385
-  api-secret: Ta2N98tJx-8LXJja98AafUbSwIQ
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
 
 logging:
   level:
-    root: INFO
-    com.example.doan: DEBUG
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    com.example.doan: ${LOGGING_LEVEL_APP:DEBUG}
   file:
     name: logs/application.log
 
 vnpay:
-  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  tmn-code: KUPG0O7F
-  hash-secret: VGhpc0lzTXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY
-  return-url: http://localhost:8080/api/v1/orders/vnpay-callback
-  frontend-url: http://localhost:5173
+  pay-url: ${VNPAY_PAY_URL}
+  tmn-code: ${VNPAY_TMN_CODE:KUPG0O7F}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  return-url: ${VNPAY_RETURN_URL}
+  frontend-url: ${VNPAY_FRONTEND_URL}
 
 cloudflare:
   turnstile:
-    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:0x4AAAAAADwNsYfwazyDLf__teh08C_xUR0}
-    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY:0x4AAAAAADwNsSvJ_osyapea}
+    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY}
+    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY}
     verify-url: https://challenges.cloudflare.com/turnstile/v0/siteverify
-
-

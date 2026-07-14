@@ -35,3 +35,6 @@ build/
 ### Application Logs ###
 /logs/
 
+### Environment Variables ###
+.env
+

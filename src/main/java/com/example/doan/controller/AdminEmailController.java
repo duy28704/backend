@@ -129,9 +129,15 @@ public class AdminEmailController {
 
     @PostMapping("/campaigns")
     public ResponseEntity<ApiResponse<EmailCampaign>> createCampaign(@RequestBody CreateCampaignRequest request) {
-        EmailTemplateDTO template = templateService.getTemplateByCode(request.getTemplateCode());
-        if (template == null) {
-            throw new RuntimeException("Mẫu email không tồn tại: " + request.getTemplateCode());
+        boolean isCustomMode = request.getCustomSubject() != null && !request.getCustomSubject().isBlank()
+                && request.getCustomBody() != null && !request.getCustomBody().isBlank();
+
+        EmailTemplateDTO template = null;
+        if (!isCustomMode) {
+            template = templateService.getTemplateByCode(request.getTemplateCode());
+            if (template == null) {
+                throw new RuntimeException("Mẫu email không tồn tại: " + request.getTemplateCode());
+            }
         }
 
         List<User> recipients = userRepository.findAll().stream()
@@ -140,7 +146,7 @@ public class AdminEmailController {
 
         EmailCampaign campaign = EmailCampaign.builder()
                 .name(request.getName())
-                .templateCode(request.getTemplateCode())
+                .templateCode(isCustomMode ? "CUSTOM" : request.getTemplateCode())
                 .targetGroup(request.getTargetGroup())
                 .totalRecipients(recipients.size())
                 .status("PROCESSING")
@@ -151,20 +157,32 @@ public class AdminEmailController {
 
         // Queue emails for all target recipients
         for (User u : recipients) {
-            String renderedBody = templateService.renderContent(template.getBodyHtml(), Map.of(
-                    "customerName", u.getName() != null ? u.getName() : "Khách hàng",
-                    "promoUrl", "http://localhost:5173/shop"
-            ));
+            String finalSubject;
+            String finalBody;
 
-            String renderedSubject = templateService.renderContent(template.getSubjectTemplate(), Map.of(
-                    "customerName", u.getName() != null ? u.getName() : "Khách hàng"
-            ));
+            if (isCustomMode) {
+                finalSubject = request.getCustomSubject();
+                // Build professional marketing HTML from plain text + optional banner
+                finalBody = buildMarketingHtml(
+                        request.getCustomBody(),
+                        request.getBannerImageUrl(),
+                        u.getName() != null ? u.getName() : "Khách hàng"
+                );
+            } else {
+                finalBody = templateService.renderContent(template.getBodyHtml(), Map.of(
+                        "customerName", u.getName() != null ? u.getName() : "Khách hàng",
+                        "promoUrl", "http://localhost:5173/shop"
+                ));
+                finalSubject = templateService.renderContent(template.getSubjectTemplate(), Map.of(
+                        "customerName", u.getName() != null ? u.getName() : "Khách hàng"
+                ));
+            }
 
             EmailQueue queueItem = EmailQueue.builder()
-                    .templateCode(template.getCode())
+                    .templateCode(isCustomMode ? "CUSTOM" : template.getCode())
                     .recipientEmail(u.getEmail())
-                    .subject(renderedSubject)
-                    .bodyHtml(renderedBody)
+                    .subject(finalSubject)
+                    .bodyHtml(finalBody)
                     .status("PENDING")
                     .scheduledAt(Instant.now())
                     .createdAt(Instant.now())
@@ -183,6 +201,59 @@ public class AdminEmailController {
                 .message("Create mass campaign success")
                 .data(campaign)
                 .build());
+    }
+
+    /**
+     * Converts admin plain text + optional banner image into a professional marketing HTML email.
+     */
+    private String buildMarketingHtml(String plainText, String bannerImageUrl, String customerName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,Helvetica,sans-serif;'>");
+        sb.append("<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background-color:#f4f4f7;padding:30px 0;'><tr><td align='center'>");
+        sb.append("<table role='presentation' width='600' cellpadding='0' cellspacing='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);'>");
+
+        // Banner image
+        if (bannerImageUrl != null && !bannerImageUrl.isBlank()) {
+            sb.append("<tr><td style='padding:0;'>");
+            sb.append("<img src='").append(bannerImageUrl.trim()).append("' alt='Banner' style='display:block;width:100%;max-width:600px;height:auto;border:0;' />");
+            sb.append("</td></tr>");
+        }
+
+        // Header with logo
+        sb.append("<tr><td style='padding:28px 32px 0 32px;text-align:center;'>");
+        sb.append("<h1 style='font-size:22px;color:#0f62fe;margin:0 0 4px 0;letter-spacing:-0.5px;'>NEXUS Tech</h1>");
+        sb.append("<p style='font-size:12px;color:#899bbd;margin:0;'>Premium Laptop & Technology Store</p>");
+        sb.append("</td></tr>");
+
+        // Greeting
+        sb.append("<tr><td style='padding:24px 32px 0 32px;'>");
+        sb.append("<p style='font-size:15px;color:#333;margin:0;'>Chào <strong>").append(customerName).append("</strong>,</p>");
+        sb.append("</td></tr>");
+
+        // Body content (convert line breaks to paragraphs)
+        sb.append("<tr><td style='padding:16px 32px 24px 32px;'>");
+        String[] paragraphs = plainText.split("\\n");
+        for (String p : paragraphs) {
+            String trimmed = p.trim();
+            if (!trimmed.isEmpty()) {
+                sb.append("<p style='font-size:15px;line-height:1.7;color:#444;margin:0 0 12px 0;'>").append(trimmed).append("</p>");
+            }
+        }
+        sb.append("</td></tr>");
+
+        // CTA Button
+        sb.append("<tr><td style='padding:0 32px 28px 32px;text-align:center;'>");
+        sb.append("<a href='http://localhost:5173/#shop' style='display:inline-block;padding:14px 36px;background-color:#0f62fe;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;letter-spacing:0.3px;'>Khám Phá Ngay Tại NEXUS</a>");
+        sb.append("</td></tr>");
+
+        // Footer
+        sb.append("<tr><td style='padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;'>");
+        sb.append("<p style='font-size:11px;color:#94a3b8;margin:0;'>Bạn nhận được email này vì đã đăng ký nhận thông tin từ NEXUS Tech.</p>");
+        sb.append("<p style='font-size:11px;color:#94a3b8;margin:4px 0 0 0;'>© 2026 NEXUS Tech. All rights reserved.</p>");
+        sb.append("</td></tr>");
+
+        sb.append("</table></td></tr></table></body></html>");
+        return sb.toString();
     }
 
     // --- ANALYTICS ---
