@@ -16,6 +16,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -63,6 +65,7 @@ public class ProductService {
         return "Hệ thống";
     }
 
+    @Cacheable(value = "laptops", key = "#includeDeleted")
     public List<Laptop> findAllLaptops(boolean includeDeleted) {
         log.info("Tìm kiếm tất cả sản phẩm laptop (bao gồm cả sản phẩm đã xóa: {})", includeDeleted);
         if (includeDeleted) {
@@ -72,6 +75,7 @@ public class ProductService {
         return laptopRepository.findByDeleted(false);
     }
 
+    @Cacheable(value = "laptop", key = "#id")
     public Laptop findLaptopById(Long id) {
         log.info("Tìm kiếm sản phẩm laptop theo ID={}", id);
         return laptopRepository.findById(id)
@@ -82,6 +86,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public Laptop createLaptop(LaptopRequest request) {
         log.info("Bắt đầu tạo sản phẩm laptop mới: tên='{}'", request.getName());
         Laptop laptop = new Laptop();
@@ -108,6 +113,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public List<Laptop> createManyLaptops(List<LaptopRequest> requests) {
         log.info("Bắt đầu tạo nhiều sản phẩm laptop cùng lúc, số lượng yêu cầu: {}", requests.size());
         List<Laptop> laptops = new ArrayList<>();
@@ -127,6 +133,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public Laptop updateLaptop(Long id, LaptopRequest request) {
         log.info("Bắt đầu cập nhật thông tin sản phẩm laptop ID={}", id);
         Laptop laptop = findLaptopById(id);
@@ -153,6 +160,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public void softDeleteLaptop(Long id) {
         log.info("Thực hiện xóa tạm thời sản phẩm laptop ID={}", id);
         Laptop laptop = findLaptopById(id);
@@ -180,6 +188,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public void softDeleteLaptops(List<Long> ids) {
         log.info("Thực hiện xóa tạm thời danh sách sản phẩm laptop IDs={}", ids);
         List<String> deletedNames = new ArrayList<>();
@@ -216,6 +225,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public void hardDeleteLaptop(Long id) {
         log.info("Thực hiện xóa vĩnh viễn sản phẩm laptop ID={}", id);
         Laptop laptop = findLaptopById(id);
@@ -245,6 +255,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public void hardDeleteLaptops(List<Long> ids) {
         log.info("Thực hiện xóa vĩnh viễn danh sách sản phẩm laptop IDs={}", ids);
         List<String> deletedNames = new ArrayList<>();
@@ -297,6 +308,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public Laptop restoreLaptop(Long id) {
         log.info("Khôi phục lại sản phẩm laptop đã bị xóa ID={}", id);
         Laptop laptop = findLaptopById(id);
@@ -325,6 +337,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public void restoreLaptops(List<Long> ids) {
         log.info("Khôi phục danh sách sản phẩm laptop đã bị xóa IDs={}", ids);
         for (Long id : ids) {
@@ -343,6 +356,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"laptops", "laptop"}, allEntries = true)
     public ExcelResult<Laptop> importExcelAndSave(MultipartFile file) throws Exception {
         log.info("Bắt đầu xử lý import dữ liệu sản phẩm từ file Excel: {}", file.getOriginalFilename());
         ExcelResult<LaptopExcelRequest> parsed = excelProductService.importExcel(file, LaptopExcelRequest.class);
