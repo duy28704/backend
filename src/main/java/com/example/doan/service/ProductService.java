@@ -406,7 +406,7 @@ public class ProductService {
     private void applyRequest(Laptop laptop, LaptopRequest request) {
         laptop.setName(request.getName().trim());
         laptop.setPrice(parseDouble(request.getPrice()));
-        laptop.setLink(trimToNull(request.getLink()));
+        laptop.setLink(generateUniqueSlug(laptop.getId(), request.getName(), request.getLink()));
         laptop.setImages(trimToNull(request.getImages()));
         laptop.setBrand(trimToNull(request.getBrand()));
         laptop.setDescription(trimToNull(request.getDescription()));
@@ -472,7 +472,7 @@ public class ProductService {
     private void applyExcelRequest(Laptop laptop, LaptopExcelRequest request) {
         laptop.setName(request.getName().trim());
         laptop.setPrice(parseDouble(request.getPrice()));
-        laptop.setLink(trimToNull(request.getLink()));
+        laptop.setLink(generateUniqueSlug(laptop.getId(), request.getName(), request.getLink()));
         laptop.setImages(trimToNull(request.getImages()));
         laptop.setBrand(trimToNull(request.getBrand()));
         laptop.setDescription(trimToNull(request.getDescription()));
@@ -575,6 +575,45 @@ public class ProductService {
             log.error("Lỗi khi chuyển đổi giá '{}' sang Double", value, e);
             return null;
         }
+    }
+
+    private String generateUniqueSlug(Long laptopId, String name, String requestedLink) {
+        String slug = trimToNull(requestedLink);
+        if (slug == null || slug.trim().isEmpty()) {
+            if (name == null || name.trim().isEmpty()) {
+                return UUID.randomUUID().toString();
+            }
+            // Normalize accent marks (e.g. á -> a, đ -> d)
+            String temp = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD);
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+            slug = pattern.matcher(temp).replaceAll("")
+                    .toLowerCase()
+                    .replaceAll("đ", "d")
+                    .replaceAll("[^a-z0-9\\s-]", "")
+                    .trim()
+                    .replaceAll("\\s+", "-")
+                    .replaceAll("-+", "-");
+        } else {
+            // Clean up requested link to slug format
+            slug = slug.trim().toLowerCase().replaceAll("[^a-z0-9\\s-]", "").replaceAll("\\s+", "-");
+        }
+
+        String baseSlug = slug;
+        int count = 1;
+        while (true) {
+            Optional<Laptop> existing = laptopRepository.findByLink(slug);
+            if (existing.isPresent()) {
+                // If it belongs to the laptop being updated, keep it
+                if (laptopId != null && existing.get().getId().equals(laptopId)) {
+                    break;
+                }
+                slug = baseSlug + "-" + count;
+                count++;
+            } else {
+                break;
+            }
+        }
+        return slug;
     }
 }
 
