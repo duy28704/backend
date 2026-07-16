@@ -58,11 +58,27 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Bắt đầu kiểm tra và chuẩn hóa slug cho tất cả sản phẩm...");
             java.util.List<Laptop> laptops = laptopRepository.findAll();
             for (Laptop laptop : laptops) {
-                if (laptop.getLink() == null || laptop.getLink().trim().isEmpty()) {
-                    String slug = productService.generateUniqueSlug(laptop.getId(), laptop.getName(), null);
-                    laptop.setLink(slug);
+                log.info("Kiểm tra sản phẩm - ID: {}, Tên: '{}', Link hiện tại trong DB: '{}'", 
+                         laptop.getId(), laptop.getName(), laptop.getLink());
+                
+                String currentLink = laptop.getLink();
+                String targetLink = null;
+                
+                if (currentLink == null 
+                    || currentLink.trim().isEmpty() 
+                    || currentLink.trim().equals(String.valueOf(laptop.getId()))
+                    || currentLink.matches("\\d+")) {
+                    // Nếu rỗng hoặc là dạng số/ID, tạo mới từ tên sản phẩm
+                    targetLink = productService.generateUniqueSlug(laptop.getId(), laptop.getName(), null);
+                } else {
+                    // Nếu đã có sẵn link chữ, chuẩn hóa lại cho đúng định dạng slug (viết thường, không dấu, dấu gạch ngang)
+                    targetLink = productService.generateUniqueSlug(laptop.getId(), laptop.getName(), currentLink);
+                }
+                
+                if (!targetLink.equals(currentLink)) {
+                    laptop.setLink(targetLink);
                     laptopRepository.save(laptop);
-                    log.info("Đã tự động tạo slug cho sản phẩm cũ ID={}: link={}", laptop.getId(), slug);
+                    log.info("--> Đã tự động cập nhật/chuẩn hóa slug thành: '{}'", targetLink);
                 }
             }
         } catch (Exception e) {

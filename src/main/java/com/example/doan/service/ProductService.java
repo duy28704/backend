@@ -594,8 +594,21 @@ public class ProductService {
                     .replaceAll("\\s+", "-")
                     .replaceAll("-+", "-");
         } else {
-            // Clean up requested link to slug format
-            slug = slug.trim().toLowerCase().replaceAll("[^a-z0-9\\s-]", "").replaceAll("\\s+", "-");
+            // Nếu link là một URL hoặc đường dẫn thư mục, bóc tách lấy phần cuối cùng (tên sản phẩm)
+            String cleanSlug = slug.trim();
+            if (cleanSlug.contains("/")) {
+                cleanSlug = cleanSlug.substring(cleanSlug.lastIndexOf("/") + 1);
+            }
+            // Loại bỏ các đuôi mở rộng định dạng file phổ biến nếu có (ví dụ: .html, .php, .aspx)
+            if (cleanSlug.contains(".")) {
+                int dotIndex = cleanSlug.lastIndexOf(".");
+                String ext = cleanSlug.substring(dotIndex).toLowerCase();
+                if (ext.equals(".html") || ext.equals(".htm") || ext.equals(".php") || ext.equals(".aspx")) {
+                    cleanSlug = cleanSlug.substring(0, dotIndex);
+                }
+            }
+            // Định dạng lại theo chuẩn slug chữ thường, phân tách bằng dấu gạch ngang
+            slug = cleanSlug.toLowerCase().replaceAll("[^a-z0-9\\s-]", "").replaceAll("\\s+", "-");
         }
 
         String baseSlug = slug;
