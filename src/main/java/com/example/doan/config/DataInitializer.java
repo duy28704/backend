@@ -28,7 +28,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         String adminEmail = "admin@nexus.com";
         String adminUsername = "admin";
-        
+
         if (!userRepository.existsByEmail(adminEmail) && !userRepository.existsByUsername(adminUsername)) {
             String joinedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
@@ -55,6 +55,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // Tự động kiểm tra và tạo slug (trường link) cho các sản phẩm cũ trong DB chưa có link
         try {
+            log.info("Bắt đầu kiểm tra và chuẩn hóa slug cho tất cả sản phẩm...");
             java.util.List<Laptop> laptops = laptopRepository.findAll();
             for (Laptop laptop : laptops) {
                 if (laptop.getLink() == null || laptop.getLink().trim().isEmpty()) {
