@@ -577,7 +577,7 @@ public class ProductService {
         }
     }
 
-    private String generateUniqueSlug(Long laptopId, String name, String requestedLink) {
+    public String generateUniqueSlug(Long laptopId, String name, String requestedLink) {
         String slug = trimToNull(requestedLink);
         if (slug == null || slug.trim().isEmpty()) {
             if (name == null || name.trim().isEmpty()) {
