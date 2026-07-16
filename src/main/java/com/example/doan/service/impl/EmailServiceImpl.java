@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +16,7 @@ public class EmailServiceImpl implements EmailService {
     private JavaMailSender mailSender;
 
     @Override
+    @Async
     public void sendOtp(String toEmail, String otpCode) {
         log.info("==================================================");
         log.info("MÃ OTP ĐĂNG NHẬP GỬI ĐẾN {}: {}", toEmail, otpCode);

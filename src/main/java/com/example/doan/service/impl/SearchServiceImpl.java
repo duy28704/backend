@@ -17,6 +17,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,7 @@ public class SearchServiceImpl implements SearchService {
     private boolean esEnabled;
 
     @Override
-    @Transactional
+    @Async
     public void indexProduct(Laptop laptop) {
         if (!esEnabled) return;
         try {
@@ -50,7 +51,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    @Transactional
+    @Async
     public void deleteProduct(Long id) {
         if (!esEnabled) return;
         try {

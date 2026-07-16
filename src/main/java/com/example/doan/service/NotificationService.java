@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,11 +52,12 @@ public class NotificationService {
         return mapToDTO(notification);
     }
 
+    @Async
     public void notifyAllAdmins(String title, String content, NotificationType type, String referenceId, String referenceUrl) {
         try {
             userRepository.findAll().stream()
                     .filter(u -> "ADMIN".equalsIgnoreCase(u.getRole()) || "STAFF".equalsIgnoreCase(u.getRole()))
-                    .forEach(u -> createNotification(u.getUsername(), title, content, type, referenceId, referenceUrl));
+                     .forEach(u -> createNotification(u.getUsername(), title, content, type, referenceId, referenceUrl));
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo tới Admins: {}", e.getMessage());
         }
